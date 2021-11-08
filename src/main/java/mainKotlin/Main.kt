@@ -1,9 +1,9 @@
 package mainKotlin
 
-import quests.Factorial
-import java.math.BigInteger
+import quests.strings.reverse
 
 fun main() {
+    println(reverse(123))
 
 }
 
