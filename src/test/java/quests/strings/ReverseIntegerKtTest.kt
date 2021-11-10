@@ -12,8 +12,8 @@ internal class ReverseIntegerKtTest {
     @ParameterizedTest
     @MethodSource("Args")
     fun Example1(int: Int, answer: Int) {
-        val reversed = reverse(int)
-        Assertions.assertEquals(reversed, answer)
+        val reversed = reverse2(int)
+        Assertions.assertEquals(answer,reversed)
     }
 
     companion object {
