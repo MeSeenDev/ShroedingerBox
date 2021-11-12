@@ -7,45 +7,6 @@ import java.util.List;
 public class TimeFormatter {
     private static int seconds = 0;
 
-    private enum Time {
-
-        years(31536000, "year"), days(86400, "day"), hours(3600, "hour"), minutes(60, "minute"), seconds(1, "second");
-        private final int sec;
-        private int quantity;
-        private String name;
-
-        Time(int sec, String year) {
-            this.sec = sec;
-            this.name = year;
-        }
-
-        public void setQuantity(int quantity) {
-            this.quantity = quantity;
-            if (quantity > 1) {
-                if (name.charAt(name.length() - 1) != 's')
-                    name = name + "s";
-            }
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int getQuantity() {
-            if (quantity == 1) {
-                if (name.charAt(name.length() - 1) == 's') {
-                    name = name.substring(0, name.length() - 1);
-                }
-
-            }
-            return quantity;
-        }
-
-        public int getSec() {
-            return sec;
-        }
-    }
-
     public static String formatDuration(int sec) {
         seconds = sec;
         if (sec == 0) return "now";
@@ -112,6 +73,45 @@ public class TimeFormatter {
             seconds -= (enu.getSec() * enu.getQuantity());
         } else {
             enu.setQuantity(0);
+        }
+    }
+
+    private enum Time {
+
+        years(31536000, "year"), days(86400, "day"), hours(3600, "hour"), minutes(60, "minute"), seconds(1, "second");
+        private final int sec;
+        private int quantity;
+        private String name;
+
+        Time(int sec, String year) {
+            this.sec = sec;
+            this.name = year;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getQuantity() {
+            if (quantity == 1) {
+                if (name.charAt(name.length() - 1) == 's') {
+                    name = name.substring(0, name.length() - 1);
+                }
+
+            }
+            return quantity;
+        }
+
+        public void setQuantity(int quantity) {
+            this.quantity = quantity;
+            if (quantity > 1) {
+                if (name.charAt(name.length() - 1) != 's')
+                    name = name + "s";
+            }
+        }
+
+        public int getSec() {
+            return sec;
         }
     }
 

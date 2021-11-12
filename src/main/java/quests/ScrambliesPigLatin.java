@@ -13,7 +13,7 @@ public class ScrambliesPigLatin {
             if (in.replaceAll("\\w", "").length() > 0) {
                 builder.append(in);
             } else {
-                builder.append(in.substring(1)).append(in.substring(0, 1)).append("ay").append(" ");
+                builder.append(in.substring(1)).append(in.charAt(0)).append("ay").append(" ");
             }
         }
         return builder.toString().trim();

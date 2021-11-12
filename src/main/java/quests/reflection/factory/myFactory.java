@@ -4,6 +4,7 @@ import java.lang.reflect.ParameterizedType;
 
 /**
  * Создает объект типа Т
+ *
  * @param <T>
  * @author MeSeenDev
  */
