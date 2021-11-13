@@ -21,8 +21,8 @@ fun reverseNodeClassic(node: LineNode): LineNode {
 tailrec fun reverseTailRec(
     prev: LineNode? = null,
     current: LineNode? = null,
-): LineNode {
-    if (current == null) return prev!!
+): LineNode? {
+    if (current == null) return prev
     val next = current.next
     current.next = prev
     return reverseTailRec(prev = current, current = next)

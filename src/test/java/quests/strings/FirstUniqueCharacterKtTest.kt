@@ -22,7 +22,10 @@ internal class FirstUniqueCharacterKtTest {
             Arguments.of("loveleetcode", 2),
             Arguments.of("aabb", -1),
             Arguments.of("a", 0),
-            Arguments.of("awqeopiruqweoiruoqiweuroqpiwuerpqouieropiquweroiquweroiquwerpoiuqweoriuqwopieruqpowieurqopwieurpoqiwueropiqwuerpoiquweropiquwerpoiuqweopiruqowpieurpoqiwuerpoiquweropiuqwerpoiuqwopieruqopiweuroiqwueroiuqweroiuqowieruoqiwueroiqwueorqytuqreyqirtiiertyuqiewruqiouert", 0),
+            Arguments.of(
+                "awqeopiruqweoiruoqiweuroqpiwuerpqouieropiquweroiquweroiquwerpoiuqweoriuqwopieruqpowieurqopwieurpoqiwueropiqwuerpoiquweropiquwerpoiuqweopiruqowpieurpoqiwuerpoiquweropiuqwerpoiuqwopieruqopiweuroiqwueroiuqweroiuqowieruoqiwueroiqwueorqytuqreyqirtiiertyuqiewruqiouert",
+                0
+            ),
         )
     }
 

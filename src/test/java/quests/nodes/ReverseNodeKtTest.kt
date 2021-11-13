@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import quests.nodes.ReverseNode.iterJavaReverseNode
+import quests.nodes.ReverseNode.recJavaReverseNode
 import java.util.stream.Stream
 
 internal class ReverseNodeKtTest {
@@ -18,9 +20,25 @@ internal class ReverseNodeKtTest {
 
     @ParameterizedTest
     @MethodSource("nodes")
+    fun reverseJavaNode(node: LineNode) {
+        val fairAnswer = node.values.reversed().toIntArray()
+        val testAnswer = iterJavaReverseNode(node).values.toIntArray()
+        Assertions.assertArrayEquals(fairAnswer, testAnswer)
+    }
+
+    @ParameterizedTest
+    @MethodSource("nodes")
+    fun reverseJavaRecNode(node: LineNode) {
+        val fairAnswer = node.values.reversed().toIntArray()
+        val testAnswer = recJavaReverseNode(null, node).values.toIntArray()
+        Assertions.assertArrayEquals(fairAnswer, testAnswer)
+    }
+
+    @ParameterizedTest
+    @MethodSource("nodes")
     fun reverseNodeTailRec(node: LineNode) {
         val fairAnswer = node.values.reversed().toIntArray()
-        val testAnswer = reverseTailRec(current = node).values.toIntArray()
+        val testAnswer = reverseTailRec(current = node)?.values?.toIntArray()
         Assertions.assertArrayEquals(fairAnswer, testAnswer)
     }
 

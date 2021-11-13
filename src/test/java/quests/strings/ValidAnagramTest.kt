@@ -14,6 +14,18 @@ internal class ValidAnagramTest {
         Assertions.assertEquals(answer, isAnagram(s = s, t = t))
     }
 
+    @ParameterizedTest
+    @MethodSource("Args")
+    fun testProperAnagram(s: String, t: String, answer: Boolean) {
+        Assertions.assertEquals(answer, isAnagramProper(s = s, t = t))
+    }
+
+    @ParameterizedTest
+    @MethodSource("Args")
+    fun testProperAnagramSpeedUp(s: String, t: String, answer: Boolean) {
+        Assertions.assertEquals(answer, isAnagramSpeedUp0(s = s, t = t))
+    }
+
     companion object {
         @JvmStatic
         fun Args() =

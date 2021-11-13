@@ -18,6 +18,7 @@ class FactoryATest {
     void generateFooInstance() throws Exception {
         Assertions.assertEquals(new FactoryFoo().generateInstance().getClass(), Foo.class);
     }
+
     @Test
     void generateAssOptInstance() throws Exception {
         Assertions.assertEquals(new FactoryAss().generateOptInstance().getClass(), Ass.class);
