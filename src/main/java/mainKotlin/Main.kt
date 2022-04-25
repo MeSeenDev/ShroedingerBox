@@ -1,17 +1,13 @@
 package mainKotlin
 
-import com.google.common.primitives.UnsignedBytes
-
 fun main() {
 
-    val byte : Byte = -12
-    println(byteToUnsigned(byte).toInt())
-    println(byte.toUByte().toInt())
-    println(byte.intVal)
-    println(-12.toByte().toUByte().toInt())
-    println(UnsignedBytes.toInt(-12))
+    val ss: String? = " СССУка"
+    println(ss?.ifBlank { " пустой" }?:"Нулевой")
 
 }
+
+
 
 val Byte.intVal : Int
     get() {
