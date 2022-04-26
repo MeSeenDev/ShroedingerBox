@@ -2,9 +2,7 @@ package mainKotlin
 
 fun main() {
 
-    val ss: String? = " СССУка"
-    println(ss?.ifBlank { " пустой" }?:"Нулевой")
-
+    println((4294967292U).toInt())
 }
 
 
