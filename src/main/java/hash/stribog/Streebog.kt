@@ -1,1296 +1,201 @@
 package hash.stribog
 
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
+import utils.toBigInteger
+import utils.toULong
+import java.math.BigInteger
+import kotlin.experimental.xor
 
-/**
- * Алгоритм хэширования Стрибог.
- */
-abstract class Streebog(
-    protected var iv: ByteArray = ByteArray(BLOCK_SIZE),
-    protected var n: ByteArray = ByteArray(BLOCK_SIZE),
-    protected var sigma: ByteArray = ByteArray(BLOCK_SIZE),
-) {
+abstract class Streebog : BaseStreebog() {
 
+    private var buffer: MutableList<Byte> = ArrayList()
+    private var epsilon: ByteArray = ByteArray(BLOCK_SIZE)
+    private var n: ByteArray = ByteArray(BLOCK_SIZE)
 
     /**
-     * Матрица для L - преобразования.
+     * Инициализационный вектор.
      */
-    private val _mixMatrix: Array<ULong> = arrayOf(
-        10241461148538942576u, 5120731167067232824u, 12468410047768571164u, 15565663454169962510u,
-        7782831729257630727u, 3891415866600138381u, 1985536642513638344u, 9459682407487014756u,
-        11534232669555429184u, 5802579435438197024u, 2901440900576963088u, 1490673956378146056u,
-        781787989577348100u, 423967304552176130u, 10119902832491179265u, 5095276525830510734u,
-        10437854279325378415u, 5219060730325499321u, 2645981896492773586u, 1322990948246386793u,
-        661629067092835514u, 9950503947520319069u, 5009451183430504352u, 12451499320283924816u,
-        11334980120984556625u, 13882478482664131238u, 6941239243714266451u, 3470619621865131175u,
-        1735309813114226397u, 901996504954577888u, 451145037279633264u, 225573111445307704u,
-        9666798413180086952u, 4872226810457511252u, 12664210371452249130u, 15663563615944659477u,
-        16298549109340514692u, 8149275110868556354u, 13117866180572368161u, 6559084273135036574u,
-        5002431046872466873u, 12409134703651359954u, 6204567353729893993u, 3135499373384246202u,
-        11227267738987503453u, 14116852178442830240u, 17292153162716999248u, 17977673556417476392u,
-        16499535732793881244u, 8249767866405689678u, 4156831343068283431u, 10545183492837949853u,
-        5272591748466192064u, 12255984678304175968u, 6128148527793546544u, 11856648851277863960u,
-        8117357270855080334u, 4058829818276389447u, 2064740540553908653u, 1071073603652986584u,
-        567617802345927532u, 10191861674357729078u, 14427389804108963099u, 7213694902063784067u
-    )
+    protected var initVector: ByteArray = ByteArray(BLOCK_SIZE)
 
-    /**
-     * Значения подстановки для S-преобразования.
-     */
-    private val _sbox = byteArrayOf(
-        0xFC.toByte(),
-        0xEE.toByte(),
-        0xDD.toByte(),
-        0x11.toByte(),
-        0xCF.toByte(),
-        0x6E.toByte(),
-        0x31.toByte(),
-        0x16.toByte(),
-        0xFB.toByte(),
-        0xC4.toByte(),
-        0xFA.toByte(),
-        0xDA.toByte(),
-        0x23.toByte(),
-        0xC5.toByte(),
-        0x04.toByte(),
-        0x4D.toByte(),
-        0xE9.toByte(),
-        0x77.toByte(),
-        0xF0.toByte(),
-        0xDB.toByte(),
-        0x93.toByte(),
-        0x2E.toByte(),
-        0x99.toByte(),
-        0xBA.toByte(),
-        0x17.toByte(),
-        0x36.toByte(),
-        0xF1.toByte(),
-        0xBB.toByte(),
-        0x14.toByte(),
-        0xCD.toByte(),
-        0x5F.toByte(),
-        0xC1.toByte(),
-        0xF9.toByte(),
-        0x18.toByte(),
-        0x65.toByte(),
-        0x5A.toByte(),
-        0xE2.toByte(),
-        0x5C.toByte(),
-        0xEF.toByte(),
-        0x21.toByte(),
-        0x81.toByte(),
-        0x1C.toByte(),
-        0x3C.toByte(),
-        0x42.toByte(),
-        0x8B.toByte(),
-        0x01.toByte(),
-        0x8E.toByte(),
-        0x4F.toByte(),
-        0x05.toByte(),
-        0x84.toByte(),
-        0x02.toByte(),
-        0xAE.toByte(),
-        0xE3.toByte(),
-        0x6A.toByte(),
-        0x8F.toByte(),
-        0xA0.toByte(),
-        0x06.toByte(),
-        0x0B.toByte(),
-        0xED.toByte(),
-        0x98.toByte(),
-        0x7F.toByte(),
-        0xD4.toByte(),
-        0xD3.toByte(),
-        0x1F.toByte(),
-        0xEB.toByte(),
-        0x34.toByte(),
-        0x2C.toByte(),
-        0x51.toByte(),
-        0xEA.toByte(),
-        0xC8.toByte(),
-        0x48.toByte(),
-        0xAB.toByte(),
-        0xF2.toByte(),
-        0x2A.toByte(),
-        0x68.toByte(),
-        0xA2.toByte(),
-        0xFD.toByte(),
-        0x3A.toByte(),
-        0xCE.toByte(),
-        0xCC.toByte(),
-        0xB5.toByte(),
-        0x70.toByte(),
-        0x0E.toByte(),
-        0x56.toByte(),
-        0x08.toByte(),
-        0x0C.toByte(),
-        0x76.toByte(),
-        0x12.toByte(),
-        0xBF.toByte(),
-        0x72.toByte(),
-        0x13.toByte(),
-        0x47.toByte(),
-        0x9C.toByte(),
-        0xB7.toByte(),
-        0x5D.toByte(),
-        0x87.toByte(),
-        0x15.toByte(),
-        0xA1.toByte(),
-        0x96.toByte(),
-        0x29.toByte(),
-        0x10.toByte(),
-        0x7B.toByte(),
-        0x9A.toByte(),
-        0xC7.toByte(),
-        0xF3.toByte(),
-        0x91.toByte(),
-        0x78.toByte(),
-        0x6F.toByte(),
-        0x9D.toByte(),
-        0x9E.toByte(),
-        0xB2.toByte(),
-        0xB1.toByte(),
-        0x32.toByte(),
-        0x75.toByte(),
-        0x19.toByte(),
-        0x3D.toByte(),
-        0xFF.toByte(),
-        0x35.toByte(),
-        0x8A.toByte(),
-        0x7E.toByte(),
-        0x6D.toByte(),
-        0x54.toByte(),
-        0xC6.toByte(),
-        0x80.toByte(),
-        0xC3.toByte(),
-        0xBD.toByte(),
-        0x0D.toByte(),
-        0x57.toByte(),
-        0xDF.toByte(),
-        0xF5.toByte(),
-        0x24.toByte(),
-        0xA9.toByte(),
-        0x3E.toByte(),
-        0xA8.toByte(),
-        0x43.toByte(),
-        0xC9.toByte(),
-        0xD7.toByte(),
-        0x79.toByte(),
-        0xD6.toByte(),
-        0xF6.toByte(),
-        0x7C.toByte(),
-        0x22.toByte(),
-        0xB9.toByte(),
-        0x03.toByte(),
-        0xE0.toByte(),
-        0x0F.toByte(),
-        0xEC.toByte(),
-        0xDE.toByte(),
-        0x7A.toByte(),
-        0x94.toByte(),
-        0xB0.toByte(),
-        0xBC.toByte(),
-        0xDC.toByte(),
-        0xE8.toByte(),
-        0x28.toByte(),
-        0x50.toByte(),
-        0x4E.toByte(),
-        0x33.toByte(),
-        0x0A.toByte(),
-        0x4A.toByte(),
-        0xA7.toByte(),
-        0x97.toByte(),
-        0x60.toByte(),
-        0x73.toByte(),
-        0x1E.toByte(),
-        0x00.toByte(),
-        0x62.toByte(),
-        0x44.toByte(),
-        0x1A.toByte(),
-        0xB8.toByte(),
-        0x38.toByte(),
-        0x82.toByte(),
-        0x64.toByte(),
-        0x9F.toByte(),
-        0x26.toByte(),
-        0x41.toByte(),
-        0xAD.toByte(),
-        0x45.toByte(),
-        0x46.toByte(),
-        0x92.toByte(),
-        0x27.toByte(),
-        0x5E.toByte(),
-        0x55.toByte(),
-        0x2F.toByte(),
-        0x8C.toByte(),
-        0xA3.toByte(),
-        0xA5.toByte(),
-        0x7D.toByte(),
-        0x69.toByte(),
-        0xD5.toByte(),
-        0x95.toByte(),
-        0x3B.toByte(),
-        0x07.toByte(),
-        0x58.toByte(),
-        0xB3.toByte(),
-        0x40.toByte(),
-        0x86.toByte(),
-        0xAC.toByte(),
-        0x1D.toByte(),
-        0xF7.toByte(),
-        0x30.toByte(),
-        0x37.toByte(),
-        0x6B.toByte(),
-        0xE4.toByte(),
-        0x88.toByte(),
-        0xD9.toByte(),
-        0xE7.toByte(),
-        0x89.toByte(),
-        0xE1.toByte(),
-        0x1B.toByte(),
-        0x83.toByte(),
-        0x49.toByte(),
-        0x4C.toByte(),
-        0x3F.toByte(),
-        0xF8.toByte(),
-        0xFE.toByte(),
-        0x8D.toByte(),
-        0x53.toByte(),
-        0xAA.toByte(),
-        0x90.toByte(),
-        0xCA.toByte(),
-        0xD8.toByte(),
-        0x85.toByte(),
-        0x61.toByte(),
-        0x20.toByte(),
-        0x71.toByte(),
-        0x67.toByte(),
-        0xA4.toByte(),
-        0x2D.toByte(),
-        0x2B.toByte(),
-        0x09.toByte(),
-        0x5B.toByte(),
-        0xCB.toByte(),
-        0x9B.toByte(),
-        0x25.toByte(),
-        0xD0.toByte(),
-        0xBE.toByte(),
-        0xE5.toByte(),
-        0x6C.toByte(),
-        0x52.toByte(),
-        0x59.toByte(),
-        0xA6.toByte(),
-        0x74.toByte(),
-        0xD2.toByte(),
-        0xE6.toByte(),
-        0xF4.toByte(),
-        0xB4.toByte(),
-        0xC0.toByte(),
-        0xD1.toByte(),
-        0x66.toByte(),
-        0xAF.toByte(),
-        0xC2.toByte(),
-        0x39.toByte(),
-        0x4B.toByte(),
-        0x63.toByte(),
-        0xB6.toByte()
-    )
 
-    /**
-     * Подстановка для P-преобразования: транспозиция.
-     */
-    private val _tau = byteArrayOf(
-        0, 8, 16, 24, 32, 40, 48, 56,
-        1, 9, 17, 25, 33, 41, 49, 57,
-        2, 10, 18, 26, 34, 42, 50, 58,
-        3, 11, 19, 27, 35, 43, 51, 59,
-        4, 12, 20, 28, 36, 44, 52, 60,
-        5, 13, 21, 29, 37, 45, 53, 61,
-        6, 14, 22, 30, 38, 46, 54, 62,
-        7, 15, 23, 31, 39, 47, 55, 63
-    )
-
-    /**
-     * Константы для KeySchedule.
-     */
-    private val _keyConsts = arrayOf(
-        byteArrayOf(
-            0xb1.toByte(),
-            0x08.toByte(),
-            0x5b.toByte(),
-            0xda.toByte(),
-            0x1e.toByte(),
-            0xca.toByte(),
-            0xda.toByte(),
-            0xe9.toByte(),
-            0xeb.toByte(),
-            0xcb.toByte(),
-            0x2f.toByte(),
-            0x81.toByte(),
-            0xc0.toByte(),
-            0x65.toByte(),
-            0x7c.toByte(),
-            0x1f.toByte(),
-            0x2f.toByte(),
-            0x6a.toByte(),
-            0x76.toByte(),
-            0x43.toByte(),
-            0x2e.toByte(),
-            0x45.toByte(),
-            0xd0.toByte(),
-            0x16.toByte(),
-            0x71.toByte(),
-            0x4e.toByte(),
-            0xb8.toByte(),
-            0x8d.toByte(),
-            0x75.toByte(),
-            0x85.toByte(),
-            0xc4.toByte(),
-            0xfc.toByte(),
-            0x4b.toByte(),
-            0x7c.toByte(),
-            0xe0.toByte(),
-            0x91.toByte(),
-            0x92.toByte(),
-            0x67.toByte(),
-            0x69.toByte(),
-            0x01.toByte(),
-            0xa2.toByte(),
-            0x42.toByte(),
-            0x2a.toByte(),
-            0x08.toByte(),
-            0xa4.toByte(),
-            0x60.toByte(),
-            0xd3.toByte(),
-            0x15.toByte(),
-            0x05.toByte(),
-            0x76.toByte(),
-            0x74.toByte(),
-            0x36.toByte(),
-            0xcc.toByte(),
-            0x74.toByte(),
-            0x4d.toByte(),
-            0x23.toByte(),
-            0xdd.toByte(),
-            0x80.toByte(),
-            0x65.toByte(),
-            0x59.toByte(),
-            0xf2.toByte(),
-            0xa6.toByte(),
-            0x45.toByte(),
-            0x07.toByte()
-        ),
-        byteArrayOf(
-            0x6f.toByte(),
-            0xa3.toByte(),
-            0xb5.toByte(),
-            0x8a.toByte(),
-            0xa9.toByte(),
-            0x9d.toByte(),
-            0x2f.toByte(),
-            0x1a.toByte(),
-            0x4f.toByte(),
-            0xe3.toByte(),
-            0x9d.toByte(),
-            0x46.toByte(),
-            0x0f.toByte(),
-            0x70.toByte(),
-            0xb5.toByte(),
-            0xd7.toByte(),
-            0xf3.toByte(),
-            0xfe.toByte(),
-            0xea.toByte(),
-            0x72.toByte(),
-            0x0a.toByte(),
-            0x23.toByte(),
-            0x2b.toByte(),
-            0x98.toByte(),
-            0x61.toByte(),
-            0xd5.toByte(),
-            0x5e.toByte(),
-            0x0f.toByte(),
-            0x16.toByte(),
-            0xb5.toByte(),
-            0x01.toByte(),
-            0x31.toByte(),
-            0x9a.toByte(),
-            0xb5.toByte(),
-            0x17.toByte(),
-            0x6b.toByte(),
-            0x12.toByte(),
-            0xd6.toByte(),
-            0x99.toByte(),
-            0x58.toByte(),
-            0x5c.toByte(),
-            0xb5.toByte(),
-            0x61.toByte(),
-            0xc2.toByte(),
-            0xdb.toByte(),
-            0x0a.toByte(),
-            0xa7.toByte(),
-            0xca.toByte(),
-            0x55.toByte(),
-            0xdd.toByte(),
-            0xa2.toByte(),
-            0x1b.toByte(),
-            0xd7.toByte(),
-            0xcb.toByte(),
-            0xcd.toByte(),
-            0x56.toByte(),
-            0xe6.toByte(),
-            0x79.toByte(),
-            0x04.toByte(),
-            0x70.toByte(),
-            0x21.toByte(),
-            0xb1.toByte(),
-            0x9b.toByte(),
-            0xb7.toByte()
-        ),
-        byteArrayOf(
-            0xf5.toByte(),
-            0x74.toByte(),
-            0xdc.toByte(),
-            0xac.toByte(),
-            0x2b.toByte(),
-            0xce.toByte(),
-            0x2f.toByte(),
-            0xc7.toByte(),
-            0x0a.toByte(),
-            0x39.toByte(),
-            0xfc.toByte(),
-            0x28.toByte(),
-            0x6a.toByte(),
-            0x3d.toByte(),
-            0x84.toByte(),
-            0x35.toByte(),
-            0x06.toByte(),
-            0xf1.toByte(),
-            0x5e.toByte(),
-            0x5f.toByte(),
-            0x52.toByte(),
-            0x9c.toByte(),
-            0x1f.toByte(),
-            0x8b.toByte(),
-            0xf2.toByte(),
-            0xea.toByte(),
-            0x75.toByte(),
-            0x14.toByte(),
-            0xb1.toByte(),
-            0x29.toByte(),
-            0x7b.toByte(),
-            0x7b.toByte(),
-            0xd3.toByte(),
-            0xe2.toByte(),
-            0x0f.toByte(),
-            0xe4.toByte(),
-            0x90.toByte(),
-            0x35.toByte(),
-            0x9e.toByte(),
-            0xb1.toByte(),
-            0xc1.toByte(),
-            0xc9.toByte(),
-            0x3a.toByte(),
-            0x37.toByte(),
-            0x60.toByte(),
-            0x62.toByte(),
-            0xdb.toByte(),
-            0x09.toByte(),
-            0xc2.toByte(),
-            0xb6.toByte(),
-            0xf4.toByte(),
-            0x43.toByte(),
-            0x86.toByte(),
-            0x7a.toByte(),
-            0xdb.toByte(),
-            0x31.toByte(),
-            0x99.toByte(),
-            0x1e.toByte(),
-            0x96.toByte(),
-            0xf5.toByte(),
-            0x0a.toByte(),
-            0xba.toByte(),
-            0x0a.toByte(),
-            0xb2.toByte()
-        ),
-        byteArrayOf(
-            0xef.toByte(),
-            0x1f.toByte(),
-            0xdf.toByte(),
-            0xb3.toByte(),
-            0xe8.toByte(),
-            0x15.toByte(),
-            0x66.toByte(),
-            0xd2.toByte(),
-            0xf9.toByte(),
-            0x48.toByte(),
-            0xe1.toByte(),
-            0xa0.toByte(),
-            0x5d.toByte(),
-            0x71.toByte(),
-            0xe4.toByte(),
-            0xdd.toByte(),
-            0x48.toByte(),
-            0x8e.toByte(),
-            0x85.toByte(),
-            0x7e.toByte(),
-            0x33.toByte(),
-            0x5c.toByte(),
-            0x3c.toByte(),
-            0x7d.toByte(),
-            0x9d.toByte(),
-            0x72.toByte(),
-            0x1c.toByte(),
-            0xad.toByte(),
-            0x68.toByte(),
-            0x5e.toByte(),
-            0x35.toByte(),
-            0x3f.toByte(),
-            0xa9.toByte(),
-            0xd7.toByte(),
-            0x2c.toByte(),
-            0x82.toByte(),
-            0xed.toByte(),
-            0x03.toByte(),
-            0xd6.toByte(),
-            0x75.toByte(),
-            0xd8.toByte(),
-            0xb7.toByte(),
-            0x13.toByte(),
-            0x33.toByte(),
-            0x93.toByte(),
-            0x52.toByte(),
-            0x03.toByte(),
-            0xbe.toByte(),
-            0x34.toByte(),
-            0x53.toByte(),
-            0xea.toByte(),
-            0xa1.toByte(),
-            0x93.toByte(),
-            0xe8.toByte(),
-            0x37.toByte(),
-            0xf1.toByte(),
-            0x22.toByte(),
-            0x0c.toByte(),
-            0xbe.toByte(),
-            0xbc.toByte(),
-            0x84.toByte(),
-            0xe3.toByte(),
-            0xd1.toByte(),
-            0x2e.toByte()
-        ),
-        byteArrayOf(
-            0x4b.toByte(),
-            0xea.toByte(),
-            0x6b.toByte(),
-            0xac.toByte(),
-            0xad.toByte(),
-            0x47.toByte(),
-            0x47.toByte(),
-            0x99.toByte(),
-            0x9a.toByte(),
-            0x3f.toByte(),
-            0x41.toByte(),
-            0x0c.toByte(),
-            0x6c.toByte(),
-            0xa9.toByte(),
-            0x23.toByte(),
-            0x63.toByte(),
-            0x7f.toByte(),
-            0x15.toByte(),
-            0x1c.toByte(),
-            0x1f.toByte(),
-            0x16.toByte(),
-            0x86.toByte(),
-            0x10.toByte(),
-            0x4a.toByte(),
-            0x35.toByte(),
-            0x9e.toByte(),
-            0x35.toByte(),
-            0xd7.toByte(),
-            0x80.toByte(),
-            0x0f.toByte(),
-            0xff.toByte(),
-            0xbd.toByte(),
-            0xbf.toByte(),
-            0xcd.toByte(),
-            0x17.toByte(),
-            0x47.toByte(),
-            0x25.toByte(),
-            0x3a.toByte(),
-            0xf5.toByte(),
-            0xa3.toByte(),
-            0xdf.toByte(),
-            0xff.toByte(),
-            0x00.toByte(),
-            0xb7.toByte(),
-            0x23.toByte(),
-            0x27.toByte(),
-            0x1a.toByte(),
-            0x16.toByte(),
-            0x7a.toByte(),
-            0x56.toByte(),
-            0xa2.toByte(),
-            0x7e.toByte(),
-            0xa9.toByte(),
-            0xea.toByte(),
-            0x63.toByte(),
-            0xf5.toByte(),
-            0x60.toByte(),
-            0x17.toByte(),
-            0x58.toByte(),
-            0xfd.toByte(),
-            0x7c.toByte(),
-            0x6c.toByte(),
-            0xfe.toByte(),
-            0x57.toByte()
-        ),
-        byteArrayOf(
-            0xae.toByte(),
-            0x4f.toByte(),
-            0xae.toByte(),
-            0xae.toByte(),
-            0x1d.toByte(),
-            0x3a.toByte(),
-            0xd3.toByte(),
-            0xd9.toByte(),
-            0x6f.toByte(),
-            0xa4.toByte(),
-            0xc3.toByte(),
-            0x3b.toByte(),
-            0x7a.toByte(),
-            0x30.toByte(),
-            0x39.toByte(),
-            0xc0.toByte(),
-            0x2d.toByte(),
-            0x66.toByte(),
-            0xc4.toByte(),
-            0xf9.toByte(),
-            0x51.toByte(),
-            0x42.toByte(),
-            0xa4.toByte(),
-            0x6c.toByte(),
-            0x18.toByte(),
-            0x7f.toByte(),
-            0x9a.toByte(),
-            0xb4.toByte(),
-            0x9a.toByte(),
-            0xf0.toByte(),
-            0x8e.toByte(),
-            0xc6.toByte(),
-            0xcf.toByte(),
-            0xfa.toByte(),
-            0xa6.toByte(),
-            0xb7.toByte(),
-            0x1c.toByte(),
-            0x9a.toByte(),
-            0xb7.toByte(),
-            0xb4.toByte(),
-            0x0a.toByte(),
-            0xf2.toByte(),
-            0x1f.toByte(),
-            0x66.toByte(),
-            0xc2.toByte(),
-            0xbe.toByte(),
-            0xc6.toByte(),
-            0xb6.toByte(),
-            0xbf.toByte(),
-            0x71.toByte(),
-            0xc5.toByte(),
-            0x72.toByte(),
-            0x36.toByte(),
-            0x90.toByte(),
-            0x4f.toByte(),
-            0x35.toByte(),
-            0xfa.toByte(),
-            0x68.toByte(),
-            0x40.toByte(),
-            0x7a.toByte(),
-            0x46.toByte(),
-            0x64.toByte(),
-            0x7d.toByte(),
-            0x6e.toByte()
-        ),
-        byteArrayOf(
-            0xf4.toByte(),
-            0xc7.toByte(),
-            0x0e.toByte(),
-            0x16.toByte(),
-            0xee.toByte(),
-            0xaa.toByte(),
-            0xc5.toByte(),
-            0xec.toByte(),
-            0x51.toByte(),
-            0xac.toByte(),
-            0x86.toByte(),
-            0xfe.toByte(),
-            0xbf.toByte(),
-            0x24.toByte(),
-            0x09.toByte(),
-            0x54.toByte(),
-            0x39.toByte(),
-            0x9e.toByte(),
-            0xc6.toByte(),
-            0xc7.toByte(),
-            0xe6.toByte(),
-            0xbf.toByte(),
-            0x87.toByte(),
-            0xc9.toByte(),
-            0xd3.toByte(),
-            0x47.toByte(),
-            0x3e.toByte(),
-            0x33.toByte(),
-            0x19.toByte(),
-            0x7a.toByte(),
-            0x93.toByte(),
-            0xc9.toByte(),
-            0x09.toByte(),
-            0x92.toByte(),
-            0xab.toByte(),
-            0xc5.toByte(),
-            0x2d.toByte(),
-            0x82.toByte(),
-            0x2c.toByte(),
-            0x37.toByte(),
-            0x06.toByte(),
-            0x47.toByte(),
-            0x69.toByte(),
-            0x83.toByte(),
-            0x28.toByte(),
-            0x4a.toByte(),
-            0x05.toByte(),
-            0x04.toByte(),
-            0x35.toByte(),
-            0x17.toByte(),
-            0x45.toByte(),
-            0x4c.toByte(),
-            0xa2.toByte(),
-            0x3c.toByte(),
-            0x4a.toByte(),
-            0xf3.toByte(),
-            0x88.toByte(),
-            0x86.toByte(),
-            0x56.toByte(),
-            0x4d.toByte(),
-            0x3a.toByte(),
-            0x14.toByte(),
-            0xd4.toByte(),
-            0x93.toByte()
-        ),
-        byteArrayOf(
-            0x9b.toByte(),
-            0x1f.toByte(),
-            0x5b.toByte(),
-            0x42.toByte(),
-            0x4d.toByte(),
-            0x93.toByte(),
-            0xc9.toByte(),
-            0xa7.toByte(),
-            0x03.toByte(),
-            0xe7.toByte(),
-            0xaa.toByte(),
-            0x02.toByte(),
-            0x0c.toByte(),
-            0x6e.toByte(),
-            0x41.toByte(),
-            0x41.toByte(),
-            0x4e.toByte(),
-            0xb7.toByte(),
-            0xf8.toByte(),
-            0x71.toByte(),
-            0x9c.toByte(),
-            0x36.toByte(),
-            0xde.toByte(),
-            0x1e.toByte(),
-            0x89.toByte(),
-            0xb4.toByte(),
-            0x44.toByte(),
-            0x3b.toByte(),
-            0x4d.toByte(),
-            0xdb.toByte(),
-            0xc4.toByte(),
-            0x9a.toByte(),
-            0xf4.toByte(),
-            0x89.toByte(),
-            0x2b.toByte(),
-            0xcb.toByte(),
-            0x92.toByte(),
-            0x9b.toByte(),
-            0x06.toByte(),
-            0x90.toByte(),
-            0x69.toByte(),
-            0xd1.toByte(),
-            0x8d.toByte(),
-            0x2b.toByte(),
-            0xd1.toByte(),
-            0xa5.toByte(),
-            0xc4.toByte(),
-            0x2f.toByte(),
-            0x36.toByte(),
-            0xac.toByte(),
-            0xc2.toByte(),
-            0x35.toByte(),
-            0x59.toByte(),
-            0x51.toByte(),
-            0xa8.toByte(),
-            0xd9.toByte(),
-            0xa4.toByte(),
-            0x7f.toByte(),
-            0x0d.toByte(),
-            0xd4.toByte(),
-            0xbf.toByte(),
-            0x02.toByte(),
-            0xe7.toByte(),
-            0x1e.toByte()
-        ),
-        byteArrayOf(
-            0x37.toByte(),
-            0x8f.toByte(),
-            0x5a.toByte(),
-            0x54.toByte(),
-            0x16.toByte(),
-            0x31.toByte(),
-            0x22.toByte(),
-            0x9b.toByte(),
-            0x94.toByte(),
-            0x4c.toByte(),
-            0x9a.toByte(),
-            0xd8.toByte(),
-            0xec.toByte(),
-            0x16.toByte(),
-            0x5f.toByte(),
-            0xde.toByte(),
-            0x3a.toByte(),
-            0x7d.toByte(),
-            0x3a.toByte(),
-            0x1b.toByte(),
-            0x25.toByte(),
-            0x89.toByte(),
-            0x42.toByte(),
-            0x24.toByte(),
-            0x3c.toByte(),
-            0xd9.toByte(),
-            0x55.toByte(),
-            0xb7.toByte(),
-            0xe0.toByte(),
-            0x0d.toByte(),
-            0x09.toByte(),
-            0x84.toByte(),
-            0x80.toByte(),
-            0x0a.toByte(),
-            0x44.toByte(),
-            0x0b.toByte(),
-            0xdb.toByte(),
-            0xb2.toByte(),
-            0xce.toByte(),
-            0xb1.toByte(),
-            0x7b.toByte(),
-            0x2b.toByte(),
-            0x8a.toByte(),
-            0x9a.toByte(),
-            0xa6.toByte(),
-            0x07.toByte(),
-            0x9c.toByte(),
-            0x54.toByte(),
-            0x0e.toByte(),
-            0x38.toByte(),
-            0xdc.toByte(),
-            0x92.toByte(),
-            0xcb.toByte(),
-            0x1f.toByte(),
-            0x2a.toByte(),
-            0x60.toByte(),
-            0x72.toByte(),
-            0x61.toByte(),
-            0x44.toByte(),
-            0x51.toByte(),
-            0x83.toByte(),
-            0x23.toByte(),
-            0x5a.toByte(),
-            0xdb.toByte()
-        ),
-        byteArrayOf(
-            0xab.toByte(),
-            0xbe.toByte(),
-            0xde.toByte(),
-            0xa6.toByte(),
-            0x80.toByte(),
-            0x05.toByte(),
-            0x6f.toByte(),
-            0x52.toByte(),
-            0x38.toByte(),
-            0x2a.toByte(),
-            0xe5.toByte(),
-            0x48.toByte(),
-            0xb2.toByte(),
-            0xe4.toByte(),
-            0xf3.toByte(),
-            0xf3.toByte(),
-            0x89.toByte(),
-            0x41.toByte(),
-            0xe7.toByte(),
-            0x1c.toByte(),
-            0xff.toByte(),
-            0x8a.toByte(),
-            0x78.toByte(),
-            0xdb.toByte(),
-            0x1f.toByte(),
-            0xff.toByte(),
-            0xe1.toByte(),
-            0x8a.toByte(),
-            0x1b.toByte(),
-            0x33.toByte(),
-            0x61.toByte(),
-            0x03.toByte(),
-            0x9f.toByte(),
-            0xe7.toByte(),
-            0x67.toByte(),
-            0x02.toByte(),
-            0xaf.toByte(),
-            0x69.toByte(),
-            0x33.toByte(),
-            0x4b.toByte(),
-            0x7a.toByte(),
-            0x1e.toByte(),
-            0x6c.toByte(),
-            0x30.toByte(),
-            0x3b.toByte(),
-            0x76.toByte(),
-            0x52.toByte(),
-            0xf4.toByte(),
-            0x36.toByte(),
-            0x98.toByte(),
-            0xfa.toByte(),
-            0xd1.toByte(),
-            0x15.toByte(),
-            0x3b.toByte(),
-            0xb6.toByte(),
-            0xc3.toByte(),
-            0x74.toByte(),
-            0xb4.toByte(),
-            0xc7.toByte(),
-            0xfb.toByte(),
-            0x98.toByte(),
-            0x45.toByte(),
-            0x9c.toByte(),
-            0xed.toByte()
-        ),
-        byteArrayOf(
-            0x7b.toByte(),
-            0xcd.toByte(),
-            0x9e.toByte(),
-            0xd0.toByte(),
-            0xef.toByte(),
-            0xc8.toByte(),
-            0x89.toByte(),
-            0xfb.toByte(),
-            0x30.toByte(),
-            0x02.toByte(),
-            0xc6.toByte(),
-            0xcd.toByte(),
-            0x63.toByte(),
-            0x5a.toByte(),
-            0xfe.toByte(),
-            0x94.toByte(),
-            0xd8.toByte(),
-            0xfa.toByte(),
-            0x6b.toByte(),
-            0xbb.toByte(),
-            0xeb.toByte(),
-            0xab.toByte(),
-            0x07.toByte(),
-            0x61.toByte(),
-            0x20.toByte(),
-            0x01.toByte(),
-            0x80.toByte(),
-            0x21.toByte(),
-            0x14.toByte(),
-            0x84.toByte(),
-            0x66.toByte(),
-            0x79.toByte(),
-            0x8a.toByte(),
-            0x1d.toByte(),
-            0x71.toByte(),
-            0xef.toByte(),
-            0xea.toByte(),
-            0x48.toByte(),
-            0xb9.toByte(),
-            0xca.toByte(),
-            0xef.toByte(),
-            0xba.toByte(),
-            0xcd.toByte(),
-            0x1d.toByte(),
-            0x7d.toByte(),
-            0x47.toByte(),
-            0x6e.toByte(),
-            0x98.toByte(),
-            0xde.toByte(),
-            0xa2.toByte(),
-            0x59.toByte(),
-            0x4a.toByte(),
-            0xc0.toByte(),
-            0x6f.toByte(),
-            0xd8.toByte(),
-            0x5d.toByte(),
-            0x6b.toByte(),
-            0xca.toByte(),
-            0xa4.toByte(),
-            0xcd.toByte(),
-            0x81.toByte(),
-            0xf3.toByte(),
-            0x2d.toByte(),
-            0x1b.toByte()
-        ),
-        byteArrayOf(
-            0x37.toByte(),
-            0x8e.toByte(),
-            0xe7.toByte(),
-            0x67.toByte(),
-            0xf1.toByte(),
-            0x16.toByte(),
-            0x31.toByte(),
-            0xba.toByte(),
-            0xd2.toByte(),
-            0x13.toByte(),
-            0x80.toByte(),
-            0xb0.toByte(),
-            0x04.toByte(),
-            0x49.toByte(),
-            0xb1.toByte(),
-            0x7a.toByte(),
-            0xcd.toByte(),
-            0xa4.toByte(),
-            0x3c.toByte(),
-            0x32.toByte(),
-            0xbc.toByte(),
-            0xdf.toByte(),
-            0x1d.toByte(),
-            0x77.toByte(),
-            0xf8.toByte(),
-            0x20.toByte(),
-            0x12.toByte(),
-            0xd4.toByte(),
-            0x30.toByte(),
-            0x21.toByte(),
-            0x9f.toByte(),
-            0x9b.toByte(),
-            0x5d.toByte(),
-            0x80.toByte(),
-            0xef.toByte(),
-            0x9d.toByte(),
-            0x18.toByte(),
-            0x91.toByte(),
-            0xcc.toByte(),
-            0x86.toByte(),
-            0xe7.toByte(),
-            0x1d.toByte(),
-            0xa4.toByte(),
-            0xaa.toByte(),
-            0x88.toByte(),
-            0xe1.toByte(),
-            0x28.toByte(),
-            0x52.toByte(),
-            0xfa.toByte(),
-            0xf4.toByte(),
-            0x17.toByte(),
-            0xd5.toByte(),
-            0xd9.toByte(),
-            0xb2.toByte(),
-            0x1b.toByte(),
-            0x99.toByte(),
-            0x48.toByte(),
-            0xbc.toByte(),
-            0x92.toByte(),
-            0x4a.toByte(),
-            0xf1.toByte(),
-            0x1b.toByte(),
-            0xd7.toByte(),
-            0x20.toByte()
-        )
-    )
-
-    protected lateinit var hashValue: ByteArray
-
-    protected var hashSizeValue = 0
-
-    protected abstract fun initialize()
-
-    protected abstract fun hashFinal(): ByteArray
+    open fun initialize() {
+        for (i in 0 until BLOCK_SIZE) {
+            n[i] = 0x00
+            epsilon[i] = 0x00
+        }
+        buffer.clear()
+    }
 
     /**
      * Формирование хэш-значения.
      */
-    private fun hashCore(array: ByteArray, ibStart: Int, cbSize: Int) {
+    protected open fun hashCore(array: ByteArray, ibStart: Int, cbSize: Int) {
+        initialize()
+        prepareBuffer(array, ibStart, cbSize)
+        processBuffer(512)
+    }
+
+    protected var hashSize = 0
+
+    protected open fun hashFinal(): ByteArray {
+        val length = addPadding()
+        processBuffer(length)
+        compress(n, true)
+        compress(epsilon, true)
+        val result = ByteArray(hashSize / 8)
+        System.arraycopy(initVector, 0, result, 0, result.size)
+        reverseBytes(result)
+        return result
+    }
+
+    open fun processBlock(message: ByteArray, length: Int) {
+        var curLength = length
+        reverseBytes(message)
+        compress(message, false)
+
+        var index = BLOCK_SIZE - 1
+        while (curLength > 0) {
+            require(index >= 0)
+            curLength += n[index].toUByte().toInt()
+            n[index] = curLength.toByte()
+            curLength = curLength shr 8
+            index--
+        }
+
+        var carry = 0
+        index = BLOCK_SIZE - 1
+        while (index >= 0) {
+            carry += epsilon[index].toUByte().toInt()
+            carry += message[index].toUByte().toInt()
+            epsilon[index] = carry.toByte()
+            carry = carry shr 8
+            index--
+        }
+    }
+
+    private fun prepareBuffer(array: ByteArray, ibStart: Int, cbSize: Int) {
         val message = ByteArray(cbSize)
         System.arraycopy(array, ibStart, message, 0, cbSize)
-        initialize()
-        val paddedMes = ByteArray(BLOCK_SIZE)
-        var len = message.size * 8
-        var hash = ByteArray(BLOCK_SIZE)
-        System.arraycopy(iv, 0, hash, 0, BLOCK_SIZE)
-        val n0 = byteArrayOf(
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        )
-        val n512 = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(BLOCK_SIZE * 8).array()
-        var inc = 0
-        while (len >= BLOCK_SIZE * 8) {
-            inc++
-            val tempMes = ByteArray(BLOCK_SIZE)
-            System.arraycopy(message, message.size - inc * BLOCK_SIZE, tempMes, 0, BLOCK_SIZE)
-            hash = compress(n, hash, tempMes)
-            n = addModulo512(n, n512)
-            sigma = addModulo512(sigma, tempMes)
-            len -= BLOCK_SIZE * 8
+        for (b in message) {
+            buffer.add(b)
         }
-        val message1 = ByteArray(message.size - inc * BLOCK_SIZE)
-        System.arraycopy(message, 0, message1, 0, message.size - inc * BLOCK_SIZE)
-        if (message1.size < BLOCK_SIZE) {
-            // дополнение сообщения до 512 бит.
-            for (i in 0 until BLOCK_SIZE - message1.size - 1) {
-                paddedMes[i] = 0
+    }
+
+    private fun processBuffer(length: Int) {
+        while (buffer.size >= BLOCK_SIZE) {
+            val message = ByteArray(BLOCK_SIZE)
+            for (i in 0 until BLOCK_SIZE) {
+                message[i] = buffer[i]
             }
-            paddedMes[BLOCK_SIZE - message1.size - 1] = 0x01
-            System.arraycopy(message1, 0, paddedMes, BLOCK_SIZE - message1.size, message1.size)
+            processBlock(message, length)
+            buffer = ArrayList(buffer.subList(BLOCK_SIZE, buffer.size))
         }
-        hash = compress(n, hash, paddedMes)
-        val mesLen = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(message1.size * 8).array()
-        n = addModulo512(n, mesLen)
-        sigma = addModulo512(sigma, paddedMes)
-        hash = compress(n0, hash, n)
-        hashValue = compress(n0, hash, sigma)
     }
 
-    private fun addModulo512(a: ByteArray, b: ByteArray): ByteArray {
-        val temp = ByteArray(BLOCK_SIZE)
-        var t = 0
-        val tempA = ByteArray(BLOCK_SIZE)
-        val tempB = ByteArray(BLOCK_SIZE)
-        System.arraycopy(a, 0, tempA, BLOCK_SIZE - a.size, a.size)
-        System.arraycopy(b, 0, tempB, BLOCK_SIZE - b.size, b.size)
-        for (i in 63 downTo 0) {
-            t = tempA[i].intVal + tempB[i].intVal + (t shr 8)
-            temp[i] = (t and 0xFF).toByte()
-        }
-        return temp
-    }
-
-    /**
-     * X - преобразование.
-     */
-    private fun addXor512(a: ByteArray, b: ByteArray): ByteArray {
-        val c = ByteArray(BLOCK_SIZE)
-        for (i in 0 until BLOCK_SIZE) c[i] = ((a[i].intVal xor (b[i]).intVal).toByte())
-        return c
-    }
-
-    /**
-     * S-преобразование.
-     */
-    private fun s(state: ByteArray): ByteArray {
-        val result = ByteArray(BLOCK_SIZE)
-        for (i in 0 until BLOCK_SIZE) {
-            result[i] = _sbox[state[i].intVal]
-        }
+    private fun addPadding(): Int {
+        val result = buffer.size * 8
+        buffer.add(1.toByte())
+        while (buffer.size < BLOCK_SIZE) buffer.add(0.toByte())
         return result
     }
 
-    private val Byte.intVal: Int
-        get() {
-            val ub = this.toUByte()
-            return ub.toInt()
-        }
+    /**
+     * S-преобразование. Нелинейное биективное преобразование.
+     */
+    private fun transformS(state: ByteArray) {
+        for (i in 0 until BLOCK_SIZE) state[i] = sbox[state[i].toUByte().toInt()]
+    }
 
     /**
-     * P - преобразование.
+     * P - преобразование. Перестановка байт.
      */
-    private fun p(state: ByteArray): ByteArray {
-        val result = ByteArray(BLOCK_SIZE)
+    private fun transformP(state: ByteArray) {
+        val prevState = ByteArray(BLOCK_SIZE)
+        System.arraycopy(state, 0, prevState, 0, BLOCK_SIZE)
         for (i in 0 until BLOCK_SIZE) {
-            result[i] = state[_tau[i].intVal]
+            state[i] = prevState[tau[i].toInt()]
         }
-        return result
     }
 
     /**
      * L - преобразование. Умножение входного вектора на бинарную матрицу.
      */
-    private fun l(state: ByteArray): ByteArray {
-        val result = ByteArray(BLOCK_SIZE)
+    private fun transformL(state: ByteArray) {
         for (i in 0..7) {
             var t: ULong = 0u
-            val tempArray = ByteArray(8)
-            System.arraycopy(state, i * 8, tempArray, 0, 8)
-            val tempBits1 = BitArray(tempArray.size * 8, tempArray)
-            val tempBits = BooleanArray(BLOCK_SIZE)
-            val tempBits1Bool: BooleanArray = tempBits1.toBooleanArray()
-            System.arraycopy(tempBits1Bool, 0, tempBits, 0, tempBits.size)
-            for (j in 0 until BLOCK_SIZE) {
-                if (tempBits[j]) {
-                    t = (t.xor(_mixMatrix[j]))
-                }
+            for (j in 0..7) {
+                val stateIndex = i shl 3 or j
+                val stateValue = state[stateIndex].toUByte().toInt()
+                t = t.toBigInteger().xor(BigInteger(mixMatrix[j][stateValue].toString())).toULong()
             }
-            val tBytes = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).putLong(t.toLong()).array()
-            System.arraycopy(tBytes, 0, result, i * 8, 8)
+            val index = i shl 3
+            state[index] = t.toBigInteger().shiftRight(56).toByte()
+            state[index + 1] = t.toBigInteger().shiftRight(48).toByte()
+            state[index + 2] = t.toBigInteger().shiftRight(40).toByte()
+            state[index + 3] = t.toBigInteger().shiftRight(32).toByte()
+            state[index + 4] = t.toBigInteger().shiftRight(24).toByte()
+            state[index + 5] = t.toBigInteger().shiftRight(16).toByte()
+            state[index + 6] = t.toBigInteger().shiftRight(8).toByte()
+            state[index + 7] = t.toBigInteger().toByte()
         }
-        return result
     }
 
-    /**
-     * Формирование временного ключа.
-     */
-    private fun keySchedule(key: ByteArray, i: Int): ByteArray {
-        var keyCopy = key.copyOf()
-        keyCopy = addXor512(keyCopy, _keyConsts[i])
-        keyCopy = s(keyCopy)
-        keyCopy = p(keyCopy)
-        keyCopy = l(keyCopy)
-        return keyCopy
-    }
-
-    private fun e(k: ByteArray, m: ByteArray): ByteArray {
-        var kCopy = k.copyOf()
-        var state = addXor512(kCopy, m)
-        for (i in 0..11) {
-            state = s(state)
-            state = p(state)
-            state = l(state)
-            kCopy = keySchedule(kCopy, i)
-            state = addXor512(state, kCopy)
-        }
-        return state
+    private fun transformationsLPS(vector: ByteArray) {
+        transformS(vector)
+        transformP(vector)
+        transformL(vector)
     }
 
     /**
      * Функция сжатия.
      */
-    private fun compress(n: ByteArray, hash: ByteArray, m: ByteArray): ByteArray {
-        var k = addXor512(hash, n)
-        k = s(k)
-        k = p(k)
-        k = l(k)
-        var t = e(k, m)
-        t = addXor512(t, hash)
-        return addXor512(t, m)
+    private fun compress(state: ByteArray, zero: Boolean) {
+        val sigma = ByteArray(BLOCK_SIZE)
+        if (zero) System.arraycopy(initVector, 0, sigma, 0, 64) else for (i in 0..63) sigma[i] =
+            (initVector[i] xor n[i]).toByte()
+        transformationsLPS(sigma)
+        val result = ByteArray(BLOCK_SIZE)
+        System.arraycopy(state, 0, result, 0, BLOCK_SIZE)
+        for (round in 0..12) {
+            for (i in 0 until BLOCK_SIZE) result[i] = result[i] xor sigma[i]
+            if (round == 12) break
+            transformationsLPS(result)
+
+            // sigma = LPS(sigma xor _keyConsts)
+            val cround = keyConsts[round]
+            for (i in 0 until BLOCK_SIZE) sigma[i] = sigma[i] xor cround[i]
+            transformationsLPS(sigma)
+        }
+        for (i in 0 until BLOCK_SIZE) result[i] = (result[i] xor initVector[i] xor state[i]).toByte()
+        System.arraycopy(result, 0, initVector, 0, 64)
+    }
+
+    private fun reverseBytes(data: ByteArray) {
+        val length = data.size
+        if (length > 1) {
+            for (i in 0 until length / 2) {
+                val tmp = data[i]
+                data[i] = data[length - i - 1]
+                data[length - i - 1] = tmp
+            }
+        }
     }
 
     /**
      * Вычисляет хэш от buffer
      */
-    fun computeHash(buffer: ByteArray): ByteArray {
+    open fun computeHash(buffer: ByteArray): ByteArray {
+        requireNotNull(buffer) { "buffer is null" } // Оставлю на случай вызова из Java
         hashCore(buffer, 0, buffer.size)
-        hashValue = hashFinal()
-        val hashValueCopy = hashValue.copyOf(hashValue.size)
+        val hashValue = hashFinal()
         initialize()
-        return hashValueCopy
+        return hashValue
     }
 
-    /**
-     * Длина блока хэшируемых данных в байтах.
-     */
+
     companion object {
-        const val BLOCK_SIZE = 64
+        /**
+         * Длина блока хэшируемых данных в байтах.
+         */
+        const val BLOCK_SIZE: Int = 64
     }
 }

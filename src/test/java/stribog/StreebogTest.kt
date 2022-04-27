@@ -1,5 +1,7 @@
 package stribog
 
+import hash.stribog.Streebog256
+import hash.stribog.Streebog512
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 import utils.hexStringToByteArray
