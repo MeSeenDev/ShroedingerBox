@@ -5,9 +5,9 @@ package quests.nodes
  */
 
 
-fun reverseNodeClassic(node: LineNode): LineNode {
+fun <T> reverseNodeClassic(node: LineNode<T>): LineNode<T> {
     var (prev, next, current)
-            = Triple<LineNode?, LineNode?, LineNode?>(null, null, node)
+            = Triple<LineNode<T>?, LineNode<T>?, LineNode<T>?>(null, null, node)
     while (current != null) {
         next = current.next
         current.next = prev
@@ -18,10 +18,10 @@ fun reverseNodeClassic(node: LineNode): LineNode {
 
 }
 
-tailrec fun reverseTailRec(
-    prev: LineNode? = null,
-    current: LineNode? = null,
-): LineNode? {
+tailrec fun <T> reverseTailRec(
+    prev: LineNode<T>? = null,
+    current: LineNode<T>? = null,
+): LineNode<T>? {
     if (current == null) return prev
     val next = current.next
     current.next = prev

@@ -1,6 +1,19 @@
 package mainKotlin
 
+import quests.nodes.LineNode
+
 fun main() {
+
+    println(ArrayDeque<LineNode<Int>>().also { deque ->
+        deque.addFirst(LineNode(value = 1))
+        (2..10).onEach { i ->
+            val nextNode = LineNode(value = i)
+            deque.first().next = nextNode
+            deque.addFirst(nextNode)
+        }
+
+    }.last().values)
+
 
 
 }

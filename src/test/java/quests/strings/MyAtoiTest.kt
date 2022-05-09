@@ -19,6 +19,7 @@ internal class MyAtoiTest {
     companion object {
         @JvmStatic
         fun args() = Stream.of(
+            Arguments.of("\"42\"", 42),
             Arguments.of("42", 42),
             Arguments.of("   -42", -42),
             Arguments.of("4193 with words", 4193),

@@ -2,8 +2,8 @@ package quests.nodes;
 
 public class ReverseNode {
 
-    public static LineNode iterJavaReverseNode(LineNode head) {
-        LineNode prev = null, next;
+    public static <T> LineNode<T> iterJavaReverseNode(LineNode<T> head) {
+        LineNode<T> prev = null, next;
         while (head != null) {
             next = head.getNext();
             head.setNext(prev);
@@ -14,9 +14,9 @@ public class ReverseNode {
         return prev;
     }
 
-    public static LineNode recJavaReverseNode(LineNode prev, LineNode head) {
+    public static <T> LineNode<T> recJavaReverseNode(LineNode<T> prev, LineNode<T> head) {
         if (head == null) return prev;
-        LineNode next = head.getNext();
+        LineNode<T> next = head.getNext();
         head.setNext(prev);
         return recJavaReverseNode(head, next);
     }

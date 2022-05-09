@@ -12,7 +12,7 @@ internal class ReverseNodeKtTest {
 
     @ParameterizedTest
     @MethodSource("nodes")
-    fun reverseNode(node: LineNode) {
+    fun reverseNode(node: LineNode<Int>) {
         val fairAnswer = node.values.reversed().toIntArray()
         val testAnswer = reverseNodeClassic(node).values.toIntArray()
         Assertions.assertArrayEquals(fairAnswer, testAnswer)
@@ -20,7 +20,7 @@ internal class ReverseNodeKtTest {
 
     @ParameterizedTest
     @MethodSource("nodes")
-    fun reverseJavaNode(node: LineNode) {
+    fun reverseJavaNode(node: LineNode<Int>) {
         val fairAnswer = node.values.reversed().toIntArray()
         val testAnswer = iterJavaReverseNode(node).values.toIntArray()
         Assertions.assertArrayEquals(fairAnswer, testAnswer)
@@ -28,7 +28,7 @@ internal class ReverseNodeKtTest {
 
     @ParameterizedTest
     @MethodSource("nodes")
-    fun reverseJavaRecNode(node: LineNode) {
+    fun reverseJavaRecNode(node: LineNode<Int>) {
         val fairAnswer = node.values.reversed().toIntArray()
         val testAnswer = recJavaReverseNode(null, node).values.toIntArray()
         Assertions.assertArrayEquals(fairAnswer, testAnswer)
@@ -36,7 +36,7 @@ internal class ReverseNodeKtTest {
 
     @ParameterizedTest
     @MethodSource("nodes")
-    fun reverseNodeTailRec(node: LineNode) {
+    fun reverseNodeTailRec(node: LineNode<Int>) {
         val fairAnswer = node.values.reversed().toIntArray()
         val testAnswer = reverseTailRec(current = node)?.values?.toIntArray()
         Assertions.assertArrayEquals(fairAnswer, testAnswer)
@@ -46,7 +46,7 @@ internal class ReverseNodeKtTest {
         @JvmStatic
         fun nodes(): Stream<Arguments> =
             Stream.of(
-                Arguments.of(ArrayDeque<LineNode>().also { deque ->
+                Arguments.of(ArrayDeque<LineNode<Int>>().also { deque ->
                     deque.addFirst(LineNode(value = 1))
                     (2..10).onEach { i ->
                         val nextNode = LineNode(value = i)
@@ -55,7 +55,7 @@ internal class ReverseNodeKtTest {
                     }
 
                 }.last()),
-                Arguments.of(ArrayDeque<LineNode>().also { deque ->
+                Arguments.of(ArrayDeque<LineNode<Int>>().also { deque ->
                     deque.addLast(LineNode(value = 10))
                     (9 downTo 1).onEach { i ->
                         val nextNode = LineNode(value = i)
