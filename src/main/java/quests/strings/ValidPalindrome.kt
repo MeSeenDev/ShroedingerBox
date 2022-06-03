@@ -1,6 +1,8 @@
 package quests.strings
 
+import java.util.*
+
 fun isPalindrome(s: String): Boolean =
-    s.toLowerCase().replace("""\W|_""".toRegex(),"").let {
+    s.lowercase(Locale.getDefault()).replace("""\W|_""".toRegex(),"").let {
         it == it.reversed()
     }

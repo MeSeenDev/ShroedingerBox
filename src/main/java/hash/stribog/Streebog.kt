@@ -151,7 +151,7 @@ abstract class Streebog : BaseStreebog() {
     private fun compress(state: ByteArray, zero: Boolean) {
         val sigma = ByteArray(BLOCK_SIZE)
         if (zero) System.arraycopy(initVector, 0, sigma, 0, 64) else for (i in 0..63) sigma[i] =
-            (initVector[i] xor n[i]).toByte()
+            (initVector[i] xor n[i])
         transformationsLPS(sigma)
         val result = ByteArray(BLOCK_SIZE)
         System.arraycopy(state, 0, result, 0, BLOCK_SIZE)
@@ -160,12 +160,11 @@ abstract class Streebog : BaseStreebog() {
             if (round == 12) break
             transformationsLPS(result)
 
-            // sigma = LPS(sigma xor _keyConsts)
             val cround = keyConsts[round]
             for (i in 0 until BLOCK_SIZE) sigma[i] = sigma[i] xor cround[i]
             transformationsLPS(sigma)
         }
-        for (i in 0 until BLOCK_SIZE) result[i] = (result[i] xor initVector[i] xor state[i]).toByte()
+        for (i in 0 until BLOCK_SIZE) result[i] = (result[i] xor initVector[i] xor state[i])
         System.arraycopy(result, 0, initVector, 0, 64)
     }
 
