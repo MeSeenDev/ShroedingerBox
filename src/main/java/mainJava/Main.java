@@ -4,19 +4,17 @@ package mainJava;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class Main {
 
-    private static ExecutorService pub = Executors.newFixedThreadPool(2);
-    private static ScheduledExecutorService susp = Executors.newScheduledThreadPool(2);
 
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws IOException {
+
 
 
     }

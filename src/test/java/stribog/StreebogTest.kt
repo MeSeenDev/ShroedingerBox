@@ -42,6 +42,7 @@ internal class StreebogTest {
         assertArrayEquals(testOut256, Streebog256().computeHash(testIn))
         assertArrayEquals(testRfc1Out256, Streebog256().computeHash(testRfc1In))
         assertArrayEquals(testRfc2Out256, Streebog256().computeHash(testRfc2In))
+        assertArrayEquals(byteArrayOf(), Streebog256().computeHash(null))
     }
 
     @Test
@@ -50,6 +51,7 @@ internal class StreebogTest {
         assertArrayEquals(testOut512, Streebog512().computeHash(testIn))
         assertArrayEquals(testRfc1Out512, Streebog512().computeHash(testRfc1In))
         assertArrayEquals(testRfc2Out512, Streebog512().computeHash(testRfc2In))
+        assertArrayEquals(byteArrayOf(), Streebog512().computeHash(null))
     }
 
 }

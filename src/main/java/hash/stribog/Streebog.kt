@@ -182,13 +182,13 @@ abstract class Streebog : BaseStreebog() {
     /**
      * Вычисляет хэш от buffer
      */
-    open fun computeHash(buffer: ByteArray): ByteArray {
-        requireNotNull(buffer) { "buffer is null" } // Оставлю на случай вызова из Java
-        hashCore(buffer, 0, buffer.size)
-        val hashValue = hashFinal()
-        initialize()
-        return hashValue
-    }
+    open fun computeHash(buffer: ByteArray?): ByteArray =
+        buffer?.also { buf ->
+            hashCore(buf, 0, buf.size)
+            val hashValue = hashFinal()
+            initialize()
+            return hashValue
+        } ?: byteArrayOf()
 
 
     companion object {
