@@ -1,14 +1,29 @@
 package mainKotlin
 
 import kotlinx.coroutines.runBlocking
+import java.io.File
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 fun main(): Unit = runBlocking {
 
 
-
 }
+
+
+private fun getFileExtension(file: File): String {
+    val name = file.name
+    val lastIndexOf = name.lastIndexOf(".")
+    return if (lastIndexOf == -1) {
+        "" // empty extension
+    } else name.substring(lastIndexOf)
+}
+
+
+var atqa = byteArrayOf(4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+val atqaInt: Int
+    get() = atqa[0].toInt() and 0xFF or ((atqa[1].toInt() and 0xFF) shl 8)
 
 
 suspend fun computate(): String {
@@ -17,10 +32,8 @@ suspend fun computate(): String {
         continuation.resumeWithException(Throwable("HErota"))
 
 
-
     }
 }
-
 
 class Sisko {
 
@@ -68,6 +81,7 @@ fun byteToUnsigned(b: Byte): UByte {
 fun hexToDec(s: String): ULong {
     return s.toULong(16)
 }
+
 
 
 
