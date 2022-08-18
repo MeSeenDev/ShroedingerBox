@@ -4,12 +4,50 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration
+
 
 fun main(): Unit = runBlocking {
 
+}
+
+
+typealias TimeProvider2 = (String) -> Unit
+
+inline fun runWithTimeCountS(calculateTime: (TimeProvider2) -> Unit) {
+    val startTimer = System.currentTimeMillis()
+    calculateTime.invoke {
+        println("$it ${System.currentTimeMillis() - startTimer}")
+    }
+}
+typealias TimeProvider = () -> Long
+
+inline fun runWithTimeCount(calculateTime: (TimeProvider) -> Unit) {
+    val startTimer = System.currentTimeMillis();
+    calculateTime { System.currentTimeMillis() - startTimer }
+}
+
+fun Duration.toLogFormat(): String =
+    " - " + this.inWholeMilliseconds + "mc"
+
+
+typealias TimeStringProvider = () -> String
+
+inline fun runWithTimeCount0(calculateTime: (TimeStringProvider) -> Unit) {
+    val startTimer = System.currentTimeMillis();
+    calculateTime { " - " + (System.currentTimeMillis() - startTimer) + "mc"; }
+}
+
+
+inline fun runWithTimeCount2(timeCounter: (execTime: Long) -> Unit) {
+    System.currentTimeMillis().also { startExec ->
+        timeCounter(System.currentTimeMillis() - startExec)
+    }
 
 }
 
+val currentTime: Long
+    get() = System.currentTimeMillis()
 
 private fun getFileExtension(file: File): String {
     val name = file.name

@@ -3,9 +3,10 @@ package mainJava;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import string.PhoneFormatter;
 
 import java.io.File;
-import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
@@ -14,11 +15,34 @@ import java.util.Objects;
 public class Main {
 
 
-    public static void main(String[] args) throws IOException {
+
+
+    public static void main(String[] args) throws Exception {
+
+        System.out.println(PhoneFormatter.prefixFormat(""));
+
+
+    }
 
 
 
 
+    private static byte vatConverter(BigDecimal vatRate) throws Exception {
+        return ((byte)Integer.parseInt(vatRate.toString()));
+    }
+
+
+
+    public static byte[] hexStringToByteArray(String s) {
+        if (s == null || s.isEmpty())
+            return new byte[0];
+        String tmpString = s.replace(" ", "");
+        int len = tmpString.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(tmpString.charAt(i), 16) << 4) + Character.digit(tmpString.charAt(i + 1), 16));
+        }
+        return data;
     }
 
     public static byte[] revertArray(byte[] array) {
@@ -111,6 +135,7 @@ public class Main {
 
         return alignString.toString();
     }
+
 
 
     @Nullable
