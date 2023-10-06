@@ -1,53 +1,29 @@
-package extensions
+package hex
 
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
+
 
 /**
  * @author Vyacheslav Doroshenko
  */
 
+val String.hex2Bytes: ByteArray
+    get() {
+        check(length % 2 == 0) { "Must have an even length" }
 
-/**
- * Convert an array of bytes into a string of hex values.
- * @param bytes Bytes to convert.
- * @return The bytes in hex string format.
- */
+        val byteIterator = chunkedSequence(2)
+            .map { it.toInt(16).toByte() }
+            .iterator()
+
+        return ByteArray(length / 2) { byteIterator.next() }
+    }
+
+val String.hexToDec: ULong get() = toULong(16)
+
 val ByteArray.bytes2Hex: String
     get() = joinToString(separator = "") { String.format("%02X", it.toInt() and 0xFF) }
 
-
-/**
- * Convert a string of hex data into a byte array.
- * Original author is: Dave L. (http://stackoverflow.com/a/140861).
- * @param hex The hex string to convert
- * @return An array of bytes with the values of the string.
- */
-val String.hex2Bytes: ByteArray
-    get() {
-        if (!(this.length % 2 == 0 && this.matches("[0-9A-Fa-f]+".toRegex()))) {
-            return byteArrayOf()
-        }
-        val len = this.length
-        val data = ByteArray(len / 2)
-        try {
-            var i = 0
-            while (i < len) {
-                data[i / 2] = ((((this[i].digitToIntOrNull(16)
-                    ?: (-1 shl 4)) + this[i + 1].digitToIntOrNull(16)!!) ?: -1)).toByte()
-                i += 2
-            }
-        } catch (e: Exception) { //ignore }
-
-        }
-        return data
-    }
-
-/**
- * Convert a hex string to ASCII string.
- * @param hex Hex string to convert.
- * @return Converted ASCII string. Null on error.
- */
 val String.hex2Ascii: String
     get() {
         if (!(this.length % 2 == 0 && this.matches("[0-9A-Fa-f]+".toRegex()))) {
@@ -64,22 +40,11 @@ val String.hex2Ascii: String
         return String(bytes, StandardCharsets.US_ASCII)
     }
 
-/**
- * Convert a ASCII string to a hex string.
- * @param ascii ASCII string to convert.
- * @return Converted hex string.
- */
 val String.ascii2Hex: String
     get() =
         takeIf { isNotBlank() }?.map { String.format("%02X", it.code) }
             ?.joinToString(separator = "") ?: "null"
 
-
-/**
- * Convert a hex string to a binary string (with leading zeros).
- * @param hex Hex string to convert.
- * @return Converted binary string.
- */
 val String.hex2Bin: String
     get() {
         if (!(length % 2 == 0 && matches("[0-9A-Fa-f]+".toRegex()))) {

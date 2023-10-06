@@ -2,8 +2,6 @@ package mainKotlin
 
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
 
 
@@ -11,33 +9,28 @@ fun main(): Unit = runBlocking {
 
 }
 
+fun inp(dig: Int): Int {
+    return if (dig > 9) dig % 10 else dig
+}
 
 typealias TimeProvider2 = (String) -> Unit
 
+typealias TimeProvider = () -> Long
 inline fun runWithTimeCountS(calculateTime: (TimeProvider2) -> Unit) {
     val startTimer = System.currentTimeMillis()
     calculateTime.invoke {
         println("$it ${System.currentTimeMillis() - startTimer}")
     }
 }
-typealias TimeProvider = () -> Long
-
 inline fun runWithTimeCount(calculateTime: (TimeProvider) -> Unit) {
     val startTimer = System.currentTimeMillis();
     calculateTime { System.currentTimeMillis() - startTimer }
 }
 
-fun Duration.toLogFormat(): String =
-    " - " + this.inWholeMilliseconds + "mc"
-
-
-typealias TimeStringProvider = () -> String
-
 inline fun runWithTimeCount0(calculateTime: (TimeStringProvider) -> Unit) {
     val startTimer = System.currentTimeMillis();
     calculateTime { " - " + (System.currentTimeMillis() - startTimer) + "mc"; }
 }
-
 
 inline fun runWithTimeCount2(timeCounter: (execTime: Long) -> Unit) {
     System.currentTimeMillis().also { startExec ->
@@ -45,6 +38,13 @@ inline fun runWithTimeCount2(timeCounter: (execTime: Long) -> Unit) {
     }
 
 }
+
+
+fun Duration.toLogFormat(): String =
+    " - " + this.inWholeMilliseconds + "mc"
+
+typealias TimeStringProvider = () -> String
+
 
 val currentTime: Long
     get() = System.currentTimeMillis()
@@ -55,54 +55,6 @@ private fun getFileExtension(file: File): String {
     return if (lastIndexOf == -1) {
         "" // empty extension
     } else name.substring(lastIndexOf)
-}
-
-
-var atqa = byteArrayOf(4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-val atqaInt: Int
-    get() = atqa[0].toInt() and 0xFF or ((atqa[1].toInt() and 0xFF) shl 8)
-
-
-suspend fun computate(): String {
-    return suspendCoroutine { continuation ->
-
-        continuation.resumeWithException(Throwable("HErota"))
-
-
-    }
-}
-
-class Sisko {
-
-    fun kilo(spusk: String) {
-        println(" SPUPK ")
-    }
-}
-
-fun Sisko.kilo(kokushki: String) {
-    println("KOKUSHKI")
-}
-
-
-/**
- * Конвертирует строку, представляющую набор байтов в 16с.с. в массив байтов
- *
- * @param s строка, представляющая массив байтов в 16 с.с.
- * @return массив байтов
- */
-fun hexStringToByteArray(s: String?): ByteArray? {
-    if (s == null || s.isEmpty()) return ByteArray(0)
-    val tmpString = s.replace(" ", "")
-    val len = tmpString.length
-    val data = ByteArray(len / 2)
-    var i = 0
-    while (i < len) {
-        data[i / 2] = ((((tmpString[i].digitToIntOrNull(16) ?: (-1 shl 4)) + tmpString[i + 1].digitToIntOrNull(16)!!)
-            ?: -1)).toByte()
-        i += 2
-    }
-    return data
 }
 
 val Byte.intVal: Int
@@ -116,9 +68,7 @@ fun byteToUnsigned(b: Byte): UByte {
 }
 
 
-fun hexToDec(s: String): ULong {
-    return s.toULong(16)
-}
+
 
 
 

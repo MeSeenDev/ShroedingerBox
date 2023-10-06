@@ -10,9 +10,7 @@ import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 
-public class
-
-OldWorks {
+public class OldWorks {
 
     // Создание Comparator'а вынесено в отдельный метод, чтобы не загромождать метод kotlin.main.
     private static Comparator<Map.Entry<String, Integer>> descendingFrequencyOrder() {

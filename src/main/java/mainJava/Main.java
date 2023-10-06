@@ -9,50 +9,17 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 
 public class Main {
 
-
-
-
     public static void main(String[] args) throws Exception {
-
         System.out.println(PhoneFormatter.prefixFormat(""));
-
-
     }
-
-
-
 
     private static byte vatConverter(BigDecimal vatRate) throws Exception {
-        return ((byte)Integer.parseInt(vatRate.toString()));
+        return ((byte) Integer.parseInt(vatRate.toString()));
     }
-
-
-
-    public static byte[] hexStringToByteArray(String s) {
-        if (s == null || s.isEmpty())
-            return new byte[0];
-        String tmpString = s.replace(" ", "");
-        int len = tmpString.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(tmpString.charAt(i), 16) << 4) + Character.digit(tmpString.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
-    public static byte[] revertArray(byte[] array) {
-        byte[] result = new byte[array.length];
-        for (int i = 0; i < array.length; i++)
-            result[i] = array[array.length - 1 - i];
-
-        return result;
-    }
-
 
 
     public static boolean isFileExtensionLike(File file, String extension) {
@@ -67,35 +34,6 @@ public class Main {
         }
         return name.substring(lastIndexOf);
     }
-
-
-    static class Reco {
-        private final String reco;
-
-        public Reco(String reco) {
-            this.reco = reco;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Reco reco1 = (Reco) o;
-            return Objects.equals(reco, reco1.reco);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(reco);
-        }
-    }
-
-
-    public static int getAtqaInt() {
-        return (atqa[0] & 0xFF) | ((atqa[1] & 0xFF) << 8);
-    }
-
-    public static byte[] atqa = new byte[]{4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     public static String alignWidthText(String first, String second, int tapeWidth) {
 
@@ -135,7 +73,6 @@ public class Main {
 
         return alignString.toString();
     }
-
 
 
     @Nullable
