@@ -3,18 +3,35 @@ package mainJava;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import string.PhoneFormatter;
 
 import java.io.File;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.*;
+import java.time.*;
+import java.util.Locale;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        System.out.println(PhoneFormatter.prefixFormat(""));
+
+        LocalDateTime localDateTime = LocalDateTime.parse("2002-01-01T23:55");
+
+        ZoneId zoneId = ZoneId.of("Europe/Berlin");
+        ZoneId zoneMow = ZoneId.of("Europe/Moscow");
+
+        ZonedDateTime zonedDateTime = ZonedDateTime.of(localDateTime, zoneId);
+
+        ZonedDateTime mowZone = zonedDateTime.withZoneSameInstant(zoneMow);
+
+        ZoneOffset zoneOffset = mowZone.getOffset();
+
+        System.out.println(mowZone);
+        System.out.println(zoneOffset);
+        System.out.println(Instant.from(mowZone).atOffset(zoneOffset).toLocalDateTime());
+        // System.out.println(Dates.toMoscowTime(localDateTime,"Europe/Berlin"));
+
+
     }
 
     private static byte vatConverter(BigDecimal vatRate) throws Exception {
